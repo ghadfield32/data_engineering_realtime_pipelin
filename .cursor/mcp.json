@@ -1,0 +1,46 @@
+{
+  "servers": {
+    "Code Executor": {
+      "type": "stdio",
+      "command": "node",
+      "args": [
+        "C:\\docker_projects\\data_engineering_realtime_pipelin\\mcp_workspace\\mcp_code_executor\\build\\index.js"
+      ],
+      "envFile": "${workspaceFolder}/.env.dev",
+      "env": {
+        "CONDA_ENV_NAME": "your_conda_env_name",
+        "CODE_STORAGE_DIR": "code_executor_storage"
+      }
+    },
+    "Jupyter": {
+      "type": "stdio",
+      "command": "docker",
+      "args": [
+        "run",
+        "-i",
+        "--rm",
+        "-e",
+        "DOCKER_DEFAULT_PLATFORM=linux/amd64",
+        "-p",
+        "8888:8888",
+        "-e",
+        "SERVER_URL=http://host.docker.internal:8888",
+        "-e",
+        "TOKEN=insert_token",
+        "-e",
+        "NOTEBOOK_PATH=notebooks/demo.ipynb",
+        "datalayer/jupyter-mcp-server:latest"
+      ]
+    },
+    "Gitingest-MCP": {
+      "type": "stdio",
+      "command": "C:\\Users\\ghadf\\anaconda3\\Scripts\\uvx.EXE",
+      "args": [
+        "--from",
+        "git+https://github.com/puravparab/gitingest-mcp",
+        "gitingest-mcp"
+      ],
+      "envFile": "${workspaceFolder}/.env.dev"
+    }
+  }
+}

@@ -1,0 +1,16 @@
+pyproject.toml
+data_engineering_realtime_pipeline.egg-info/PKG-INFO
+data_engineering_realtime_pipeline.egg-info/SOURCES.txt
+data_engineering_realtime_pipeline.egg-info/dependency_links.txt
+data_engineering_realtime_pipeline.egg-info/requires.txt
+data_engineering_realtime_pipeline.egg-info/top_level.txt
+mcp_workspace/setup_mcp.py
+mcp_workspace/tasks.py
+mcp_workspace/build/lib/mcp_setup/__init__.py
+mcp_workspace/build/lib/mcp_setup/configurator.py
+mcp_workspace/build/lib/mcp_setup/generator.py
+mcp_workspace/build/lib/mcp_setup/validator.py
+mcp_workspace/mcp_setup/__init__.py
+mcp_workspace/mcp_setup/configurator.py
+mcp_workspace/mcp_setup/generator.py
+mcp_workspace/mcp_setup/validator.py

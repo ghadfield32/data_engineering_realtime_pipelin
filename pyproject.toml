@@ -44,6 +44,10 @@ dependencies = [
 
     # Stream processing and query engines
     "trino>=0.325.0",
+    "joblib>=1.3.2",
+    "prometheus_client>=0.21.0",
+    "confluent-kafka[avro]>=2.3.0",
+    
 ]
 
 [project.optional-dependencies]

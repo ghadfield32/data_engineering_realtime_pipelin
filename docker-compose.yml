@@ -203,6 +203,7 @@ services:
       redis:
         condition: service_healthy
     environment:
+      AIRFLOW_CONFIG: /opt/airflow/airflow.cfg
       AIRFLOW__CORE__EXECUTOR: CeleryExecutor
       AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres:5432/airflow
       AIRFLOW__CELERY__BROKER_URL: redis://redis:6379/0
@@ -210,10 +211,14 @@ services:
       AIRFLOW__CORE__FERNET_KEY: ''
       AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: 'true'
       AIRFLOW__CORE__LOAD_EXAMPLES: 'false'
+      PYTHONPATH: /src:${PYTHONPATH}
       
       # Auth configuration for Airflow 3.0
       AIRFLOW__CORE__AUTH_MANAGER: 'airflow.api_fastapi.auth.managers.simple.simple_auth_manager.SimpleAuthManager'
       AIRFLOW__API__AUTH_BACKENDS: 'airflow.api.auth.backend.basic_auth,airflow.api.auth.backend.session'
+      
+      # API Auth JWT Secret for Airflow 3.0
+      AIRFLOW__API_AUTH__JWT_SECRET: 'supersecretkey123456789'
       
       # Simple auth manager settings - this is the correct format for Airflow 3.0
       AIRFLOW__SIMPLE_AUTH_MANAGER__USERS: '${AIRFLOW_ADMIN_USERNAME}:${AIRFLOW_ADMIN_PASSWORD}'
@@ -226,9 +231,11 @@ services:
       - ./src/orchestrators/airflow/dags:/opt/airflow/dags
       - ./src/orchestrators/airflow/plugins:/opt/airflow/plugins
       - ./src/orchestrators/airflow/config:/opt/airflow/config
+      - ./src/orchestrators/airflow/config/airflow.cfg:/opt/airflow/airflow.cfg
       - airflow-logs-volume:/opt/airflow/logs
       - ./data:/data
-      - ./airflow_home/simple_auth_manager_passwords.json.generated:/opt/airflow/simple_auth_manager_passwords.json.generated
+      - ./src:/src
+      - ./src/orchestrators/airflow/simple_auth_manager_passwords.json.generated:/opt/airflow/simple_auth_manager_passwords.json.generated
     ports:
       - "${AIRFLOW_WEB_PORT}:8080"
     healthcheck:
@@ -247,24 +254,31 @@ services:
       airflow-webserver:
         condition: service_started
     environment:
+      AIRFLOW_CONFIG: /opt/airflow/airflow.cfg
       AIRFLOW__CORE__EXECUTOR: CeleryExecutor
       AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres:5432/airflow
       AIRFLOW__CELERY__BROKER_URL: redis://redis:6379/0
       AIRFLOW__CELERY__RESULT_BACKEND: db+postgresql://airflow:airflow@postgres:5432/airflow
       AIRFLOW__CORE__FERNET_KEY: ''
-      AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: 'true'
+      AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: 'False'
       AIRFLOW__CORE__LOAD_EXAMPLES: 'false'
       AIRFLOW__SCHEDULER__MIN_FILE_PROCESS_INTERVAL: 10
       AIRFLOW__CORE__ENABLE_XCOM_PICKLING: 'true'
+      PYTHONPATH: /src:${PYTHONPATH}
       # Enable extra features
       AIRFLOW__CORE__TASK_DEFER_METHOD: 'airflow.triggers.triggerer.DeferralTrigger'
       AIRFLOW__ASSETWATCHER__ENABLE: 'true'
+      # API Auth JWT Secret for Airflow 3.0
+      AIRFLOW__API_AUTH__JWT_SECRET: 'supersecretkey123456789'
     volumes:
       - ./src/orchestrators/airflow/dags:/opt/airflow/dags
       - ./src/orchestrators/airflow/plugins:/opt/airflow/plugins
+      - ./src/orchestrators/airflow/config:/opt/airflow/config
+      - ./src/orchestrators/airflow/config/airflow.cfg:/opt/airflow/airflow.cfg
       - ./src/orchestrators/dbt:/opt/airflow/dbt
       - airflow-logs-volume:/opt/airflow/logs
       - ./data:/data
+      - ./src:/src
     command: scheduler
 
   airflow-worker:
@@ -275,21 +289,28 @@ services:
       airflow-webserver:
         condition: service_started
     environment:
+      AIRFLOW_CONFIG: /opt/airflow/airflow.cfg
       AIRFLOW__CORE__EXECUTOR: CeleryExecutor
       AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres:5432/airflow
       AIRFLOW__CELERY__BROKER_URL: redis://redis:6379/0
       AIRFLOW__CELERY__RESULT_BACKEND: db+postgresql://airflow:airflow@postgres:5432/airflow
       AIRFLOW__CORE__FERNET_KEY: ''
       AIRFLOW__CORE__LOAD_EXAMPLES: 'false'
+      PYTHONPATH: /src:${PYTHONPATH}
       # Enable extra features
       AIRFLOW__CORE__TASK_DEFER_METHOD: 'airflow.triggers.triggerer.DeferralTrigger'
       AIRFLOW__ASSETWATCHER__ENABLE: 'true'
+      # API Auth JWT Secret for Airflow 3.0
+      AIRFLOW__API_AUTH__JWT_SECRET: 'supersecretkey123456789'
     volumes:
       - ./src/orchestrators/airflow/dags:/opt/airflow/dags
       - ./src/orchestrators/airflow/plugins:/opt/airflow/plugins
+      - ./src/orchestrators/airflow/config:/opt/airflow/config
+      - ./src/orchestrators/airflow/config/airflow.cfg:/opt/airflow/airflow.cfg
       - ./src/orchestrators/dbt:/opt/airflow/dbt
       - airflow-logs-volume:/opt/airflow/logs
       - ./data:/data
+      - ./src:/src
     command: celery worker
 
   airflow-triggerer:
@@ -300,21 +321,28 @@ services:
       airflow-webserver:
         condition: service_started
     environment:
+      AIRFLOW_CONFIG: /opt/airflow/airflow.cfg
       AIRFLOW__CORE__EXECUTOR: CeleryExecutor
       AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres:5432/airflow
       AIRFLOW__CELERY__BROKER_URL: redis://redis:6379/0
       AIRFLOW__CELERY__RESULT_BACKEND: db+postgresql://airflow:airflow@postgres:5432/airflow
       AIRFLOW__CORE__FERNET_KEY: ''
       AIRFLOW__CORE__LOAD_EXAMPLES: 'false'
+      PYTHONPATH: /src:${PYTHONPATH}
       # Enable extra features
       AIRFLOW__CORE__TASK_DEFER_METHOD: 'airflow.triggers.triggerer.DeferralTrigger'
       AIRFLOW__ASSETWATCHER__ENABLE: 'true'
+      # API Auth JWT Secret for Airflow 3.0
+      AIRFLOW__API_AUTH__JWT_SECRET: 'supersecretkey123456789'
     volumes:
       - ./src/orchestrators/airflow/dags:/opt/airflow/dags
       - ./src/orchestrators/airflow/plugins:/opt/airflow/plugins
+      - ./src/orchestrators/airflow/config:/opt/airflow/config
+      - ./src/orchestrators/airflow/config/airflow.cfg:/opt/airflow/airflow.cfg
       - ./src/orchestrators/dbt:/opt/airflow/dbt
       - airflow-logs-volume:/opt/airflow/logs
       - ./data:/data
+      - ./src:/src
     command: triggerer
 
   #############################################

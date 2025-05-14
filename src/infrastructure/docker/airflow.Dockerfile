@@ -17,10 +17,14 @@ USER airflow
 
 # Set environment variables explicitly to avoid SQLAlchemy conflicts
 ENV AIRFLOW__DATABASE__EXECUTEMANY_MODE=batch 
+ENV AIRFLOW_CONFIG=/opt/airflow/airflow.cfg
 
 WORKDIR /app
 COPY pyproject.toml /app/
 RUN pip install --no-cache-dir /app/
+
+# Copy configuration files
+COPY src/orchestrators/airflow/config/airflow.cfg /opt/airflow/airflow.cfg
 
 # Only copy your DAGs and plugins when they change
 COPY src/orchestrators/airflow/dags /opt/airflow/dags
@@ -28,3 +32,4 @@ COPY src/orchestrators/airflow/plugins /opt/airflow/plugins
 
 # Initialize Airflow
 WORKDIR /opt/airflow 
+

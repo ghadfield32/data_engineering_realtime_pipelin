@@ -1,0 +1,42 @@
+name: 'data_engineering_realtime_pipeline'
+version: '1.0.0'
+config-version: 2
+
+profile: 'default'
+
+model-paths: ["models"]
+analysis-paths: ["analyses"]
+test-paths: ["tests"]
+seed-paths: ["seeds"]
+macro-paths: ["macros"]
+snapshot-paths: ["snapshots"]
+
+target-path: "target"
+clean-targets:
+  - "target"
+  - "dbt_packages"
+  - "logs"
+
+models:
+  data_engineering_realtime_pipeline:
+    # Applies to all models
+    +materialized: view
+    
+    # NBA models
+    nba:
+      +schema: nba_analytics
+      +materialized: table
+      
+    # Weather models  
+    weather:
+      +schema: weather_analytics
+      +materialized: table
+      
+    # GTFS models
+    gtfs:
+      +schema: gtfs_analytics
+      +materialized: table
+
+seeds:
+  data_engineering_realtime_pipeline:
+    +schema: reference_data 

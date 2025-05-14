@@ -1,0 +1,60 @@
+version: 2
+
+sources:
+  - name: gtfs
+    description: "Raw GTFS-RT data from MTA API"
+    database: "{{ env_var('DBT_DATABASE', 'data') }}"
+    schema: "{{ env_var('DBT_SCHEMA', 'raw') }}"
+    tables:
+      - name: raw_vehicle_positions
+        description: "Raw vehicle position data from GTFS-RT feed"
+        columns:
+          - name: id
+            description: "Unique identifier for the entity"
+            tests:
+              - not_null
+          - name: vehicle
+            description: "Vehicle data in JSON format"
+          - name: _fetched_at
+            description: "Timestamp when the data was fetched"
+            tests:
+              - not_null
+          - name: _source
+            description: "Source URL of the data"
+          - name: _processing_time
+            description: "Timestamp when the data was processed"
+            
+models:
+  - name: daily_vehicle_counts
+    description: "Daily aggregation of vehicle counts by route"
+    columns:
+      - name: processing_date
+        description: "Date the data was processed"
+        tests:
+          - not_null
+      - name: route_id
+        description: "Route identifier"
+        tests:
+          - not_null
+      - name: unique_vehicle_count
+        description: "Count of unique vehicles on the route that day"
+      - name: position_count
+        description: "Total count of position reports for the route"
+      - name: first_position_time
+        description: "First time a vehicle was recorded on the route"
+      - name: last_position_time
+        description: "Last time a vehicle was recorded on the route"
+      - name: avg_speed
+        description: "Average speed of vehicles on the route"
+      - name: status_incoming_at
+        description: "Count of vehicles with INCOMING_AT status"
+      - name: status_stopped_at
+        description: "Count of vehicles with STOPPED_AT status"
+      - name: status_in_transit_to
+        description: "Count of vehicles with IN_TRANSIT_TO status"
+      - name: pct_incoming_at
+        description: "Percentage of vehicles with INCOMING_AT status"
+      - name: pct_stopped_at
+        description: "Percentage of vehicles with STOPPED_AT status"
+      - name: pct_in_transit_to
+        description: "Percentage of vehicles with IN_TRANSIT_TO status" 

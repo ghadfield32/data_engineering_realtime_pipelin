@@ -1,0 +1,179 @@
+id: weather-data-pipeline
+namespace: data_engineering
+revision: 1
+
+description: |
+  Weather Data Pipeline using Open-Meteo API
+  
+  This flow fetches weather data from Open-Meteo API for specified locations,
+  processes it, and stores it in the configured backend (S3, GCS, or DuckDB).
+  It runs on a schedule every 3 hours to get updated weather forecasts.
+
+labels:
+  owner: data-engineering
+  dataset: weather
+  environment: "{{ vars.environment | default('dev') }}"
+
+# Get weather for top US cities every 3 hours
+schedule:
+  cron: "0 */3 * * *"
+
+variables:
+  # Default environment is development
+  environment: "{{ vars.environment | default('dev') }}"
+  
+  # Storage configuration
+  storage_type: "{{ vars.storage_type | default('duckdb') }}"  # duckdb, s3, gcs, azure
+  output_format: "{{ vars.output_format | default('json') }}"
+  
+  # API details
+  api_type: "open-meteo"
+  api_key: "{{ vars.api_key | default('') }}"  # Not required for Open-Meteo
+  
+  # Define cities to fetch weather for
+  cities:
+    - name: "New York"
+      latitude: 40.7128
+      longitude: -74.0060
+    - name: "Los Angeles"
+      latitude: 34.0522
+      longitude: -118.2437
+    - name: "Chicago"
+      latitude: 41.8781
+      longitude: -87.6298
+    - name: "Houston"
+      latitude: 29.7604
+      longitude: -95.3698
+    - name: "Phoenix"
+      latitude: 33.4484
+      longitude: -112.0740
+
+# Main workflow
+tasks:
+  # Log the start of execution
+  - id: log_start
+    type: io.kestra.core.tasks.log.Log
+    message: "Starting weather data pipeline for {{ cities | length }} cities"
+
+  # For each city, fetch the weather data
+  - id: fetch_weather_for_cities
+    type: io.kestra.core.tasks.flows.EachParallel
+    value: "{{ cities }}"
+    tasks:
+      # Fetch forecast data
+      - id: fetch_forecast
+        type: io.kestra.plugin.scripts.python.Script
+        inputFiles:
+          fetch_weather.py: |
+            import os
+            import sys
+            import json
+            from kestra import Kestra
+
+            # Add the ingestion module to the Python path
+            # Adjust this path if needed
+            sys.path.append('/app/src')
+            
+            try:
+                from ingestion.fetch_weather import WeatherFetcher
+            except ImportError:
+                # Fallback to direct import if possible
+                try:
+                    from fetch_weather import WeatherFetcher
+                except ImportError:
+                    raise ImportError("Could not import WeatherFetcher")
+
+            # Get parameters from Kestra
+            city = Kestra.inputs['city']
+            api_type = Kestra.inputs['api_type']
+            api_key = Kestra.inputs['api_key']
+            output_format = Kestra.inputs['output_format']
+            
+            # Initialize the fetcher
+            fetcher = WeatherFetcher(api_key=api_key, api_type=api_type)
+            
+            # Fetch weather data
+            data = fetcher.fetch_forecast(
+                latitude=city['latitude'],
+                longitude=city['longitude']
+            )
+            
+            # Add metadata about the city
+            data['city_name'] = city['name']
+            
+            # Store the result in a file
+            with open('weather_data.json', 'w') as f:
+                json.dump(data, f)
+                
+            # Also store as variables for downstream tasks
+            Kestra.outputs = {
+                'data': data,
+                'city_name': city['name'],
+                'latitude': city['latitude'],
+                'longitude': city['longitude']
+            }
+        inputVars:
+          city: "{{ taskContext.value }}"
+          api_type: "{{ api_type }}"
+          api_key: "{{ api_key }}"
+          output_format: "{{ output_format }}"
+        outputFiles:
+          - weather_data.json
+            
+      # Store the data based on storage_type
+      - id: store_weather_data
+        type: io.kestra.core.tasks.flows.Switch
+        value: "{{ storage_type }}"
+        cases:
+          # Store in S3
+          - value: s3
+            tasks:
+              - id: store_in_s3
+                type: io.kestra.plugin.aws.s3.Upload
+                bucket: "{{ vars.s3_bucket }}"
+                key: "weather/{{ environment }}/{{ city_name | slugify }}_{{ now() | date('yyyy-MM-dd_HH-mm-ss') }}.json"
+                from: "{{ outputs.fetch_forecast.files.weather_data_json }}"
+
+          # Store in GCS
+          - value: gcs
+            tasks:
+              - id: store_in_gcs
+                type: io.kestra.plugin.gcp.gcs.Upload
+                bucket: "{{ vars.gcs_bucket }}"
+                blobName: "weather/{{ environment }}/{{ city_name | slugify }}_{{ now() | date('yyyy-MM-dd_HH-mm-ss') }}.json"
+                from: "{{ outputs.fetch_forecast.files.weather_data_json }}"
+                
+          # Store in DuckDB (default)
+          - tasks:
+              - id: store_in_duckdb
+                type: io.kestra.plugin.jdbc.duckdb.Query
+                url: "jdbc:duckdb:{{ vars.duckdb_path | default('/tmp/weather_data.duckdb') }}"
+                fetchOne: true
+                sql: |
+                  CREATE TABLE IF NOT EXISTS weather_forecast (
+                      id INTEGER PRIMARY KEY, 
+                      city_name VARCHAR,
+                      latitude FLOAT,
+                      longitude FLOAT,
+                      timezone VARCHAR,
+                      data JSON,
+                      created_at TIMESTAMP
+                  );
+                  
+                  INSERT INTO weather_forecast (
+                      city_name, latitude, longitude, timezone, data, created_at
+                  ) 
+                  SELECT 
+                      '{{ outputs.fetch_forecast.city_name }}',
+                      {{ outputs.fetch_forecast.latitude }},
+                      {{ outputs.fetch_forecast.longitude }},
+                      '{{ outputs.fetch_forecast.data.timezone }}',
+                      '{{ outputs.fetch_forecast.files.weather_data_json | read | toJson }}',
+                      CURRENT_TIMESTAMP
+                  RETURNING id;
+
+  # Final notification
+  - id: send_notification
+    type: io.kestra.core.tasks.log.Log
+    message: "Weather data pipeline completed successfully"
+    level: INFO 

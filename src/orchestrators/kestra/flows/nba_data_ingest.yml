@@ -1,0 +1,140 @@
+id: nba_data_ingest
+namespace: realtime_pipeline
+description: |
+  This flow fetches NBA game data from an API, processes it, and loads it into PostgreSQL.
+  It uses Kestra's declarative YAML format to define the pipeline stages.
+
+inputs:
+  - name: date
+    type: string
+    defaults: "{{now() | date.format('yyyy-MM-dd')}}"
+    description: "The date to fetch NBA games for (YYYY-MM-DD format)"
+
+tasks:
+  # Fetch NBA data from API
+  - id: fetch_nba_data
+    type: io.kestra.plugin.core.http.Request
+    method: GET
+    uri: https://api.example.com/nba/games
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+      X-API-Key: "{{ env('NBA_API_KEY', 'demo-key') }}"
+    parameters:
+      date: "{{ inputs.date }}"
+    timeout: PT30S
+
+  # Check if API returned valid data
+  - id: validate_response
+    type: io.kestra.core.tasks.flows.Switch
+    value: "{{ fetch_nba_data.body | json.has('games') ? 'valid' : 'invalid' }}"
+    cases:
+      valid:
+        - id: extract_games
+          type: io.kestra.plugin.core.script.EvaluateJsonPath
+          data: "{{ fetch_nba_data.body }}"
+          expression: "$.games"
+      invalid:
+        - id: generate_dummy_data
+          type: io.kestra.core.tasks.scripts.Bash
+          commands:
+            - |
+              cat > /tmp/dummy_nba_data.json << EOF
+              [
+                {
+                  "id": "$(date +%Y%m%d)-LAL-GSW",
+                  "date": "{{ inputs.date }}",
+                  "home_team": "LAL",
+                  "away_team": "GSW",
+                  "score_home": 120,
+                  "score_away": 115
+                },
+                {
+                  "id": "$(date +%Y%m%d)-BOS-MIA",
+                  "date": "{{ inputs.date }}",
+                  "home_team": "BOS",
+                  "away_team": "MIA",
+                  "score_home": 105,
+                  "score_away": 98
+                }
+              ]
+              EOF
+              
+              cat /tmp/dummy_nba_data.json
+  
+  # Process and transform the data
+  - id: process_data
+    type: io.kestra.core.tasks.scripting.Nashorn
+    script: |
+      var games = inputs.cases === "valid" ? extract_games.result : JSON.parse(generate_dummy_data.stdout);
+      var result = [];
+      
+      for (var i = 0; i < games.length; i++) {
+        var game = games[i];
+        // Add processing metadata
+        game.processing_time = new Date().toISOString();
+        result.push(game);
+      }
+      
+      return result;
+    inputs:
+      cases: "{{ validate_response.value }}"
+      extract_games: "{{ validate_response.value == 'valid' ? extract_games : null }}"
+      generate_dummy_data: "{{ validate_response.value == 'invalid' ? generate_dummy_data : null }}"
+
+  # Save data to PostgreSQL
+  - id: save_to_postgres
+    type: io.kestra.plugin.jdbc.Query
+    url: jdbc:postgresql://postgres:5432/airflow
+    username: airflow
+    password: airflow
+    fetchSize: 10000
+    foreach: "{{ process_data.result }}"
+    query: |
+      INSERT INTO nba.games 
+      (game_id, date, home_team, away_team, score_home, score_away, updated_at)
+      VALUES ('{{ taskrunContext.variables.item.id }}', 
+              '{{ taskrunContext.variables.item.date }}', 
+              '{{ taskrunContext.variables.item.home_team }}', 
+              '{{ taskrunContext.variables.item.away_team }}', 
+              {{ taskrunContext.variables.item.score_home }}, 
+              {{ taskrunContext.variables.item.score_away }}, 
+              CURRENT_TIMESTAMP)
+      ON CONFLICT (game_id) 
+      DO UPDATE SET 
+          score_home = EXCLUDED.score_home,
+          score_away = EXCLUDED.score_away,
+          updated_at = CURRENT_TIMESTAMP;
+
+  # Run dbt model to transform the data
+  - id: run_dbt_model
+    type: io.kestra.core.tasks.scripts.Bash
+    commands:
+      - cd /app/dbt && dbt run --select nba_games_summary --profiles-dir .
+    timeout: PT5M
+
+  # Create a flag file for AssetWatcher
+  - id: create_flag_file
+    type: io.kestra.core.tasks.scripts.Bash
+    commands:
+      - |
+        mkdir -p /data/nba
+        echo "Data processed at $(date)" > /data/nba/new_data.flag
+        echo "Flag file created at /data/nba/new_data.flag"
+
+  # Notify on completion
+  - id: send_notification
+    type: io.kestra.plugin.notifications.console.Notification
+    title: "NBA Data Pipeline Completed"
+    message: |
+      NBA data pipeline completed successfully.
+      Date: {{ inputs.date }}
+      Games processed: {{ process_data.result | length }}
+      Execution ID: {{ execution.id }}
+
+triggers:
+  - id: daily_trigger
+    type: io.kestra.core.models.triggers.Schedule
+    cron: "0 5 * * *" # Run at 5 AM daily
+    backfill:
+      start: "2024-01-01T00:00:00Z" 

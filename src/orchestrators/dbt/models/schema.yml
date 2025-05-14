@@ -1,0 +1,151 @@
+version: 2
+
+sources:
+  - name: postgres
+    database: airflow  # Default for local development
+    schema: public
+    tables:
+      - name: nba_games
+        identifier: nba.games
+        description: NBA games data including scores
+        columns:
+          - name: game_id
+            description: Unique identifier for the game
+            tests:
+              - unique
+              - not_null
+          - name: date
+            description: Date of the game
+            tests:
+              - not_null
+          - name: home_team
+            description: Home team abbreviation
+            tests:
+              - not_null
+          - name: away_team
+            description: Away team abbreviation
+            tests:
+              - not_null
+          - name: score_home
+            description: Score of the home team
+          - name: score_away
+            description: Score of the away team
+
+      - name: nba_teams
+        identifier: nba.teams
+        description: NBA teams reference data
+        columns:
+          - name: team_id
+            description: Unique identifier for the team
+            tests:
+              - unique
+              - not_null
+          - name: team_name
+            description: Full name of the team
+            tests:
+              - not_null
+          - name: team_abbr
+            description: Team abbreviation
+            tests:
+              - not_null
+
+      - name: weather_observations
+        identifier: weather.observations
+        description: Weather observations from various locations
+        columns:
+          - name: obs_id
+            description: Unique identifier for the observation
+            tests:
+              - unique
+              - not_null
+          - name: location
+            description: Location name
+            tests:
+              - not_null
+          - name: latitude
+            description: Latitude coordinate
+          - name: longitude
+            description: Longitude coordinate
+          - name: obs_time
+            description: Observation timestamp
+            tests:
+              - not_null
+          - name: temperature
+            description: Temperature in Celsius
+          - name: humidity
+            description: Humidity percentage
+          - name: pressure
+            description: Atmospheric pressure in millibars
+          - name: wind_speed
+            description: Wind speed in km/h
+          - name: wind_direction
+            description: Wind direction
+          - name: conditions
+            description: Weather conditions description
+
+      - name: gtfs_vehicle_positions
+        identifier: gtfs.vehicle_positions
+        description: GTFS realtime vehicle position data
+        columns:
+          - name: event_id
+            description: Unique identifier for the event
+            tests:
+              - unique
+              - not_null
+          - name: vehicle_id
+            description: Vehicle identifier
+            tests:
+              - not_null
+          - name: timestamp
+            description: Event timestamp
+            tests:
+              - not_null
+
+models:
+  - name: nba_games_summary
+    description: >
+      Summarizes NBA games data by date and team, calculating various statistics
+      like total points, wins, and averages.
+    columns:
+      - name: date
+        description: Date of the games
+        tests:
+          - not_null
+      - name: games_played
+        description: Number of games played on this date
+      - name: avg_total_score
+        description: Average total score across all games
+      - name: team
+        description: Team abbreviation
+      - name: wins
+        description: Number of wins for this team on this date
+      - name: losses
+        description: Number of losses for this team on this date
+      - name: total_points
+        description: Total points scored by this team on this date
+
+  - name: weather_daily_summary
+    description: >
+      Aggregates weather observations by day and location, providing daily
+      weather statistics and metrics.
+    columns:
+      - name: date
+        description: Date of the observations
+        tests:
+          - not_null
+      - name: location
+        description: Location name
+        tests:
+          - not_null
+      - name: observation_count
+        description: Number of observations for this date and location
+      - name: avg_temp
+        description: Average temperature
+      - name: min_temp
+        description: Minimum temperature
+      - name: max_temp
+        description: Maximum temperature
+      - name: nba_games_played
+        description: Number of NBA games played on this date
+      - name: weather_comfort_level
+        description: Categorization of weather comfort level 

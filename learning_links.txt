@@ -1,0 +1,14 @@
+https://www.starburst.io/blog/starburst-elements-what-is-trino/
+
+https://www.starburst.io/icehouse/?utm_channel=paid&utm_adgroup={adgroup}&utm_source=google&utm_medium=cpc&utm_campaign=NORAM-NB-Icehouse&utm_content={adgroup}&utm_term=iceberg%20data%20lake&hsa_acc=5176009545&hsa_cam=21280921823&hsa_grp=161860721163&hsa_ad=699205526762&hsa_src=g&hsa_tgt=kwd-1415398265973&hsa_kw=iceberg%20data%20lake&hsa_mt=b&hsa_net=adwords&hsa_ver=3&gad_source=1&gad_campaignid=21280921823&gclid=Cj0KCQjwt8zABhDKARIsAHXuD7Yqp8Ol4uesNT5jToLIugCpbECnwmXeGKtOLQoXU1uJnGHifjcYGIwaAlCfEALw_wcB
+
+
+https://www.databricks.com/blog/databricks-tabular
+
+
+https://www.astronomer.io/ebooks/data-pipelines-with-apache-airflow/?utm_term=airflow%20for%20data%20pipeline&utm_campaign=airflow-solutions-na&utm_source=adwords&utm_medium=ppc&hsa_acc=4274135664&hsa_cam=21865965814&hsa_grp=169329544069&hsa_ad=719343168936&hsa_src=g&hsa_tgt=kwd-2268893682402&hsa_kw=airflow%20for%20data%20pipeline&hsa_mt=p&hsa_net=adwords&hsa_ver=3&gad_source=1&gad_campaignid=21865965814&gclid=Cj0KCQjw2tHABhCiARIsANZzDWouhfTlXU4OWXm6p0wLdpaXAfP69a2IfgmdEvJUtD6JlBrqbYsObD4aApa9EALw_wcB
+
+
+https://chatgpt.com/c/6813518c-6ee0-8012-81a9-fc3212c665c0
+
+

@@ -1,0 +1,62 @@
+#!/usr/bin/env python3
+"""
+AWS Lambda function for GTFS data ingestion
+
+This function is triggered by CloudWatch Events to fetch GTFS Realtime data
+and store it in S3. The data can then be analyzed using Athena or other tools.
+"""
+
+import os
+import time
+import logging
+import boto3
+from fetch_gtfs import GTFSFetcher
+
+# Configure logging
+logger = logging.getLogger()
+logger.setLevel(logging.INFO)
+
+# Get configuration from environment variables (set in Terraform)
+S3_BUCKET = os.environ.get('S3_BUCKET', '${s3_bucket}')
+S3_PREFIX = os.environ.get('S3_PREFIX', '${s3_prefix}')
+GTFS_API_URL = os.environ.get('GTFS_API_URL')
+GTFS_API_KEY = os.environ.get('GTFS_API_KEY')
+OUTPUT_FORMAT = os.environ.get('OUTPUT_FORMAT', 'json')
+
+def lambda_handler(event, context):
+    """
+    Lambda handler function triggered by CloudWatch Events
+    """
+    start_time = time.time()
+    logger.info(f"Starting GTFS ingestion at {start_time}")
+    
+    # Initialize the GTFS fetcher
+    fetcher = GTFSFetcher(api_url=GTFS_API_URL, api_key=GTFS_API_KEY)
+    
+    try:
+        # Fetch and save to S3
+        location = fetcher.save_to_s3(
+            bucket=S3_BUCKET,
+            prefix=S3_PREFIX,
+            fmt=OUTPUT_FORMAT
+        )
+        
+        execution_time = time.time() - start_time
+        logger.info(f"GTFS data saved to {location} in {execution_time:.2f} seconds")
+        
+        return {
+            "statusCode": 200,
+            "executionTime": execution_time,
+            "location": location,
+            "message": "GTFS data saved successfully"
+        }
+        
+    except Exception as e:
+        logger.error(f"Error ingesting GTFS data: {e}", exc_info=True)
+        
+        return {
+            "statusCode": 500,
+            "executionTime": time.time() - start_time,
+            "error": str(e),
+            "message": "Error ingesting GTFS data"
+        } 

@@ -1,0 +1,25 @@
+
+# Astro Runtime includes the following pre-installed providers packages: https://docs.astronomer.io/astro/runtime-image-architecture#provider-packages
+
+apache-airflow[postgres]
+apache-airflow-providers-apache-kafka
+apache-airflow-providers-amazon
+apache-airflow-providers-google
+apache-airflow-providers-microsoft-azure
+apache-airflow-providers-postgres
+apache-airflow-providers-common-sql
+# apache-airflow-upgrade-check  # Tool for checking Airflow 3 upgrade compatibility
+# airflow upgrade_check
+
+duckdb>=1.0.0
+pandas>=2.0.0
+tabulate
+pyarrow>=10.0.0
+requests>=2.0.0
+python-dotenv>=1.0.0
+confluent-kafka>=2.0.0
+kafka-python
+protobuf
+gtfs-realtime-bindings
+psycopg2-binary
+ruff

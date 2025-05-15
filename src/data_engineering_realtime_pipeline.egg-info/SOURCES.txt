@@ -5,6 +5,7 @@ src/data_engineering_realtime_pipeline.egg-info/SOURCES.txt
 src/data_engineering_realtime_pipeline.egg-info/dependency_links.txt
 src/data_engineering_realtime_pipeline.egg-info/requires.txt
 src/data_engineering_realtime_pipeline.egg-info/top_level.txt
+src/ingestion/__init__.py
 src/ingestion/fetch_gtfs.py
 src/ingestion/fetch_nba.py
 src/ingestion/fetch_weather.py

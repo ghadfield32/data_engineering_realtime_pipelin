@@ -26,7 +26,7 @@ dependencies = [
     "requests>=2.31.0",
     "pydantic>=2.5.3",
     "python-dotenv>=1.0.0",
-    "pandas>=2.0.0",
+    "pandas==2.1.4",
     "pyarrow>=10.0.0",
     "duckdb>=0.9.0",
     
@@ -41,6 +41,12 @@ dependencies = [
     
     # Data formats
     "fastavro>=1.7.0",
+    
+    # Airflow providers (moved from optional dependencies to main dependencies)
+    "apache-airflow-providers-postgres>=5.0.0",
+    "apache-airflow-providers-apache-kafka>=1.1.0",
+    "apache-airflow-providers-standard>=1.0.0",
+    "apache-airflow-providers-http>=4.5.0",
 ]
 
 [project.optional-dependencies]
@@ -64,15 +70,11 @@ azure = [
 # Orchestrators
 airflow = [
     "apache-airflow>=3.0.0",
-    "apache-airflow-providers-postgres>=5.0.0",
-    "apache-airflow-providers-apache-kafka>=1.1.0",
     "apache-airflow-providers-dbt-cloud>=3.5.0",
     "apache-airflow-providers-slack>=8.0.0",
-    "apache-airflow-providers-http>=4.5.0",
     "apache-airflow-providers-amazon>=6.0.0",
     "apache-airflow-providers-google>=10.0.0",
     "apache-airflow-providers-microsoft-azure>=6.0.0",
-    "apache-airflow-providers-standard>=1.0.0",
 ]
 
 dbt = [

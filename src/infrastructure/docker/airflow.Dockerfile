@@ -13,6 +13,15 @@ RUN apt-get update \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
+# Install provider packages as root to make them available system-wide
+RUN pip install --no-cache-dir \
+    apache-airflow-providers-postgres>=5.0.0 \
+    apache-airflow-providers-apache-kafka>=1.1.0 \
+    apache-airflow-providers-standard>=1.0.0 \
+    apache-airflow-providers-http>=4.5.0 \
+    confluent-kafka>=2.1.0 \
+    gtfs-realtime-bindings>=1.0.0
+
 USER airflow
 
 # Set environment variables explicitly to avoid SQLAlchemy conflicts
@@ -21,6 +30,8 @@ ENV AIRFLOW_CONFIG=/opt/airflow/airflow.cfg
 
 WORKDIR /app
 COPY pyproject.toml /app/
+
+# Install the main package
 RUN pip install --no-cache-dir /app/
 
 # Copy configuration files
@@ -31,5 +42,6 @@ COPY src/orchestrators/airflow/dags /opt/airflow/dags
 COPY src/orchestrators/airflow/plugins /opt/airflow/plugins
 
 # Initialize Airflow
-WORKDIR /opt/airflow 
+WORKDIR /opt/airflow
+
 

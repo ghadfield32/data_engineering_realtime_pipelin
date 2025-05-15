@@ -42,29 +42,19 @@ Choose the environment that matches your needs:
 
 #### General Development Environment
 ```bash
-# On Linux/macOS
-./scripts/setup_dev_environment.sh
 
-# On Windows PowerShell
-.\scripts\setup_dev_environment.ps1
 ```
 
 #### Airflow 3.0 Environment
 ```bash
-# On Linux/macOS
-./scripts/setup_airflow3_environment.sh
+cd src/orchestrators/airflow3
 
-# On Windows PowerShell
-# Use equivalent PowerShell script
+astro dev start
 ```
 
 #### Kestra Environment
 ```bash
-# On Linux/macOS
-./scripts/setup_kestra_environment.sh
 
-# On Windows PowerShell
-# Use equivalent PowerShell script
 ```
 
 ### Run with Docker Compose
